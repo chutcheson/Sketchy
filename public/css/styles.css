@@ -1,0 +1,336 @@
+/* Base styles and resets */
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --accent-color: #f39c12;
+  --background-color: #f5f5f5;
+  --card-background: #fff;
+  --text-color: #333;
+  --border-color: #ddd;
+  --success-color: #27ae60;
+  --error-color: #e74c3c;
+  --border-radius: 8px;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header styles */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.score-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.team-score {
+  text-align: center;
+}
+
+.team-name {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.score {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.score-divider {
+  font-size: 16px;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+/* Game setup styles */
+.game-setup {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+label {
+  font-weight: 500;
+}
+
+.model-select {
+  padding: 12px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-background);
+  font-size: 16px;
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Game board styles */
+.game-board {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.game-info {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 15px 20px;
+}
+
+.round-info, .timer-container, .role-info {
+  text-align: center;
+}
+
+.label {
+  font-size: 14px;
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-bottom: 5px;
+}
+
+.value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#timer {
+  color: var(--accent-color);
+}
+
+/* Illustration container */
+.illustration-container {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 450px;
+}
+
+#svg-display {
+  max-width: 400px;
+  max-height: 400px;
+}
+
+/* Guesses panel */
+.guesses-panel {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.guesses-panel h3 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+.guesses-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  max-height: 320px;
+}
+
+.guess-item {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+}
+
+.guess-item.correct {
+  background-color: rgba(46, 204, 113, 0.1);
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.guess-text {
+  flex-grow: 1;
+}
+
+.guess-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.guess-input-container {
+  display: flex;
+  gap: 10px;
+}
+
+#guess-input {
+  flex-grow: 1;
+  padding: 10px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.action-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #27ae60;
+}
+
+/* Overlay styles */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.result-container {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+}
+
+.result-container h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+}
+
+.result-container p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+#secret-word {
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.final-scores {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+}
+
+#winning-team {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--success-color);
+  margin-bottom: 20px;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .game-board {
+    grid-template-columns: 1fr;
+  }
+  
+  .game-info {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .round-info, .timer-container, .role-info {
+    flex: 1 0 40%;
+  }
+  
+  header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .score-container {
+    width: 100%;
+    justify-content: space-around;
+  }
+}

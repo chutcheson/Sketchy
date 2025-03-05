@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Pictionary</title>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header section -->
+    <header>
+      <h1>LLM Pictionary</h1>
+      <div class="score-container">
+        <div class="team-score">
+          <div class="team-name">Team 1</div>
+          <div id="team1-score" class="score">0</div>
+        </div>
+        <div class="score-divider">vs</div>
+        <div class="team-score">
+          <div class="team-name">Team 2</div>
+          <div id="team2-score" class="score">0</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main game content -->
+    <main>
+      <div class="game-setup" id="game-setup">
+        <h2>Game Setup</h2>
+        <div class="setup-form">
+          <div class="form-group">
+            <label for="team1-model">Team 1 Model</label>
+            <select id="team1-model" class="model-select">
+              <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
+              <option value="gpt-4o">GPT-4o</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="team2-model">Team 2 Model</label>
+            <select id="team2-model" class="model-select">
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
+            </select>
+          </div>
+          <button id="start-game-btn" class="primary-btn">Start Game</button>
+        </div>
+      </div>
+
+      <div class="game-board" id="game-board" style="display: none;">
+        <!-- Game info section -->
+        <div class="game-info">
+          <div class="round-info">
+            <div class="label">Round</div>
+            <div id="current-round" class="value">1/10</div>
+          </div>
+          <div class="timer-container">
+            <div class="label">Time Left</div>
+            <div id="timer" class="value">60</div>
+          </div>
+          <div class="role-info">
+            <div class="label">Team 1</div>
+            <div id="team1-role" class="value">Illustrator</div>
+          </div>
+          <div class="role-info">
+            <div class="label">Team 2</div>
+            <div id="team2-role" class="value">Guesser</div>
+          </div>
+        </div>
+
+        <!-- Illustration area -->
+        <div class="illustration-container">
+          <div id="svg-display"></div>
+        </div>
+
+        <!-- Guesses panel -->
+        <div class="guesses-panel">
+          <h3>Guesses</h3>
+          <div id="guesses-list" class="guesses-list"></div>
+          <div class="guess-input-container">
+            <input type="text" id="guess-input" placeholder="Enter your guess...">
+            <button id="submit-guess-btn" class="action-btn">Guess</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game results overlay -->
+      <div class="overlay" id="round-result-overlay" style="display: none;">
+        <div class="result-container">
+          <h2 id="result-title"></h2>
+          <p id="result-message"></p>
+          <p>Secret word was: <span id="secret-word"></span></p>
+          <button id="next-round-btn" class="primary-btn">Next Round</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="game-over-overlay" style="display: none;">
+        <div class="result-container">
+          <h2>Game Over!</h2>
+          <div class="final-scores">
+            <div class="team-score">
+              <div class="team-name">Team 1</div>
+              <div id="final-team1-score" class="score">0</div>
+            </div>
+            <div class="team-score">
+              <div class="team-name">Team 2</div>
+              <div id="final-team2-score" class="score">0</div>
+            </div>
+          </div>
+          <div id="winning-team"></div>
+          <button id="new-game-btn" class="primary-btn">New Game</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
