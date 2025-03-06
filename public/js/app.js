@@ -48,7 +48,8 @@ let gameState = {
   currentRound: 1,
   timeRemaining: 60,
   timerInterval: null,
-  guesses: []
+  guesses: [],
+  currentTurnId: null // Track the current turn ID to validate server responses
 };
 
 // Event listeners
@@ -232,6 +233,12 @@ function submitGuess() {
  * @param {Object} data The event data containing the SVG and guesses
  */
 function handleIllustrationUpdate(data) {
+  // Validate turn ID if present
+  if (data.turnId && gameState.currentTurnId && data.turnId !== gameState.currentTurnId) {
+    console.log(`Received outdated illustration (turn ${data.turnId}, current ${gameState.currentTurnId}) - ignoring`);
+    return; // Ignore outdated illustrations
+  }
+  
   // Display the SVG
   svgDisplay.innerHTML = data.svg;
   
@@ -286,6 +293,12 @@ function handleNewGuess(data) {
  * @param {Object} data The event data
  */
 function handleLLMGuess(data) {
+  // Validate turn ID if present
+  if (data.turnId && gameState.currentTurnId && data.turnId !== gameState.currentTurnId) {
+    console.log(`Received outdated guess (turn ${data.turnId}, current ${gameState.currentTurnId}) - ignoring`);
+    return; // Ignore outdated guesses
+  }
+  
   // Display the guess in the input field and then submit it
   guessInput.value = data.guess;
   submitGuess();
@@ -370,6 +383,10 @@ function handleNewRound(data) {
   gameState.currentRound = data.round;
   gameState.team1Score = data.team1Score;
   gameState.team2Score = data.team2Score;
+  
+  // Generate a new turnId for this round
+  gameState.currentTurnId = `turn-${Date.now()}`;
+  console.log(`Starting new round with turn ID: ${gameState.currentTurnId}`);
   
   // Update UI
   currentRoundDisplay.textContent = `${data.round}/10`;

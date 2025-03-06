@@ -99,9 +99,11 @@ function setupLLMHandlers(io, socket) {
           currentRole: 'guesser' // For backward compatibility
         },
         round: 1,
+        turnId: Date.now().toString(), // Unique ID for this turn/round
         timeRemaining: 60,
         guesses: [],
-        svgImage: null
+        svgImage: null,
+        pendingRequests: new Set() // Track ongoing API requests
       });
       
       // Join socket to game room
@@ -207,13 +209,20 @@ function setupLLMHandlers(io, socket) {
  */
 async function generateIllustration(gameId, game) {
   try {
+    // Capture the current turn ID at the start of the process
+    const currentTurnId = game.turnId;
+    
     // Get the active team
     const activeTeamNum = game.activeTeam;
     const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
     const activeModel = activeTeam.model;
     
     // Log the drawing attempt
-    console.log(`Generating illustration for word "${game.secretWord}" by Team ${activeTeamNum} (${activeModel})`);
+    console.log(`Generating illustration for word "${game.secretWord}" by Team ${activeTeamNum} (${activeModel}) [Turn ID: ${currentTurnId}]`);
+    
+    // Create a request identifier for tracking
+    const requestId = `illustration-${Date.now()}`;
+    game.pendingRequests.add(requestId);
     
     // Generate the SVG based on the active team's model
     let svgContent;
@@ -232,22 +241,39 @@ async function generateIllustration(gameId, game) {
       </svg>`;
     }
     
+    // Remove this request from pending
+    game.pendingRequests.delete(requestId);
+    
+    // Verify that the turn hasn't changed while we were waiting
+    if (game.turnId !== currentTurnId) {
+      console.log(`Turn ID changed from ${currentTurnId} to ${game.turnId} - discarding illustration`);
+      return; // Exit without updating game state or emitting event
+    }
+    
     // Update game state with the SVG
     game.svgImage = svgContent;
     
     // Emit the SVG to clients
     ioInstance.to(gameId).emit('illustration_update', { 
       svg: svgContent,
-      guesses: game.guesses 
+      guesses: game.guesses,
+      turnId: currentTurnId // Include turn ID so client can validate
     });
     
-    console.log(`Illustration generated successfully for "${game.secretWord}"`);
+    console.log(`Illustration generated successfully for "${game.secretWord}" [Turn ID: ${currentTurnId}]`);
     
     // Same team will both illustrate and guess
     if (activeModel !== 'human') {
       console.log(`Team ${activeTeamNum} (${activeModel}) will now try to guess their own drawing`);
       // Wait a moment to simulate thinking time
-      setTimeout(() => processGuessWithLLM(gameId, game), 2000);
+      setTimeout(() => {
+        // Verify the turn is still active before guessing
+        if (game.turnId === currentTurnId) {
+          processGuessWithLLM(gameId, game, currentTurnId);
+        } else {
+          console.log(`Turn changed before guessing - skipping LLM guess`);
+        }
+      }, 2000);
     } else {
       console.log(`Team ${activeTeamNum} (Human) will guess their own drawing`);
     }
@@ -266,12 +292,19 @@ async function generateIllustration(gameId, game) {
  */
 async function refineIllustration(gameId, game, latestGuess) {
   try {
+    // Capture the current turn ID at the start of the process
+    const currentTurnId = game.turnId;
+    
     // Get the active team
     const activeTeamNum = game.activeTeam;
     const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
     const activeModel = activeTeam.model;
     
-    console.log(`Refining illustration for "${game.secretWord}" by Team ${activeTeamNum} after guess: ${latestGuess}`);
+    console.log(`Refining illustration for "${game.secretWord}" by Team ${activeTeamNum} after guess: ${latestGuess} [Turn ID: ${currentTurnId}]`);
+    
+    // Create a request identifier for tracking
+    const requestId = `refinement-${Date.now()}`;
+    game.pendingRequests.add(requestId);
     
     // Generate refined SVG based on the active team's model
     let svgContent;
@@ -283,7 +316,17 @@ async function refineIllustration(gameId, game, latestGuess) {
     } else {
       // Human player doesn't get automatic refinement
       console.log(`Human player Team ${activeTeamNum} will need to manually refine their drawing`);
+      game.pendingRequests.delete(requestId);
       return; // Exit without updating SVG
+    }
+    
+    // Remove this request from pending
+    game.pendingRequests.delete(requestId);
+    
+    // Verify that the turn hasn't changed while we were waiting
+    if (game.turnId !== currentTurnId) {
+      console.log(`Turn ID changed from ${currentTurnId} to ${game.turnId} - discarding refinement`);
+      return; // Exit without updating game state or emitting event
     }
     
     // Update game state with the new SVG
@@ -292,16 +335,24 @@ async function refineIllustration(gameId, game, latestGuess) {
     // Emit the updated SVG to clients
     ioInstance.to(gameId).emit('illustration_update', { 
       svg: svgContent,
-      guesses: game.guesses 
+      guesses: game.guesses,
+      turnId: currentTurnId // Include turn ID so client can validate
     });
     
-    console.log(`Illustration refined successfully for "${game.secretWord}"`);
+    console.log(`Illustration refined successfully for "${game.secretWord}" [Turn ID: ${currentTurnId}]`);
     
     // Same team will continue guessing
     if (activeModel !== 'human') {
       console.log(`Team ${activeTeamNum} (${activeModel}) will try again with the refined drawing`);
       // Wait a moment to simulate thinking time
-      setTimeout(() => processGuessWithLLM(gameId, game), 2000);
+      setTimeout(() => {
+        // Verify the turn is still active before guessing
+        if (game.turnId === currentTurnId) {
+          processGuessWithLLM(gameId, game, currentTurnId);
+        } else {
+          console.log(`Turn changed before guessing - skipping LLM guess`);
+        }
+      }, 2000);
     }
     
   } catch (error) {
@@ -314,9 +365,16 @@ async function refineIllustration(gameId, game, latestGuess) {
  * Processes guesses using the guessing LLM
  * @param {string} gameId The game ID
  * @param {Object} game The game state
+ * @param {string} turnId The turn ID to validate against
  */
-async function processGuessWithLLM(gameId, game) {
+async function processGuessWithLLM(gameId, game, turnId) {
   try {
+    // Validate that we're still in the same turn
+    if (game.turnId !== turnId) {
+      console.log(`Turn ID mismatch for guess: expected ${turnId}, got ${game.turnId} - discarding guess`);
+      return; // Exit without processing
+    }
+    
     // Get the active team
     const activeTeamNum = game.activeTeam;
     const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
@@ -329,6 +387,12 @@ async function processGuessWithLLM(gameId, game) {
       return;
     }
     
+    console.log(`Processing guess for Team ${activeTeamNum} (${activeModel}) [Turn ID: ${turnId}]`);
+    
+    // Create a request identifier for tracking
+    const requestId = `guess-${Date.now()}`;
+    game.pendingRequests.add(requestId);
+    
     // Generate guess based on the active team's model
     let guess;
     
@@ -338,15 +402,26 @@ async function processGuessWithLLM(gameId, game) {
       guess = await generateGuessWithOpenAI(game.svgImage, game.guesses);
     } else {
       console.log(`Human player Team ${activeTeamNum} needs to provide a guess`);
+      game.pendingRequests.delete(requestId);
       return; // Exit without making an AI guess
     }
     
-    console.log(`Team ${activeTeamNum} (${activeModel}) guessed: "${guess}"`);
+    // Remove this request from pending
+    game.pendingRequests.delete(requestId);
+    
+    // Verify that the turn hasn't changed while we were waiting
+    if (game.turnId !== turnId) {
+      console.log(`Turn ID changed from ${turnId} to ${game.turnId} - discarding guess`);
+      return; // Exit without emitting the guess
+    }
+    
+    console.log(`Team ${activeTeamNum} (${activeModel}) guessed: "${guess}" [Turn ID: ${turnId}]`);
     
     // Emit the guess event (this will trigger the submit_guess handler)
     ioInstance.to(gameId).emit('llm_guess', { 
       guess,
-      model: activeModel
+      model: activeModel,
+      turnId: turnId // Include turn ID so client can validate
     });
     
   } catch (error) {
@@ -375,8 +450,16 @@ function startNextRound(gameId, game) {
     return;
   }
   
+  // Cancel any pending API requests from the previous round
+  console.log(`Cancelling ${game.pendingRequests.size} pending requests from previous round`);
+  // Just clear the set - we'll use the turnId to validate responses
+  game.pendingRequests.clear();
+  
   // Increment round
   game.round++;
+  
+  // Generate a new turn ID to invalidate any pending API responses
+  game.turnId = Date.now().toString();
   
   // Switch active team
   game.activeTeam = game.activeTeam === 1 ? 2 : 1;
