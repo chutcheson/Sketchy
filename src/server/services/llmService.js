@@ -107,16 +107,16 @@ function setupLLMHandlers(io, socket) {
       // Join socket to game room
       socket.join(gameId);
       
-      // Start the game by requesting the first SVG from the illustrator
-      await generateIllustration(gameId, activeGames.get(gameId));
-      
-      // Emit game created event
+      // Emit game created event first so client can start UI setup
       ioInstance.to(gameId).emit('game_created', { 
         gameId, 
         team1Model, 
         team2Model,
         round: 1
       });
+      
+      // Start the game by requesting the first SVG from the illustrator
+      await generateIllustration(gameId, activeGames.get(gameId));
       
     } catch (error) {
       console.error('Error creating game:', error);
