@@ -1,18 +1,49 @@
-const Anthropic = require('anthropic');
+const { Anthropic } = require('@anthropic-ai/sdk');
 const OpenAI = require('openai');
 const { getRandomWord } = require('../utils/wordGenerator');
 
 // Initialize API clients
+// Read API keys from files if environment variables are not set
+let anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+let openaiApiKey = process.env.OPENAI_API_KEY;
+
+try {
+  // If environment variables aren't set, try to read from files
+  if (!anthropicApiKey) {
+    const fs = require('fs');
+    const path = require('path');
+    const anthropicKeyPath = path.join(__dirname, '../../../anthropic_api_key.txt');
+    if (fs.existsSync(anthropicKeyPath)) {
+      anthropicApiKey = fs.readFileSync(anthropicKeyPath, 'utf8').trim();
+    }
+  }
+  
+  if (!openaiApiKey) {
+    const fs = require('fs');
+    const path = require('path');
+    const openaiKeyPath = path.join(__dirname, '../../../openai_api_key.txt');
+    if (fs.existsSync(openaiKeyPath)) {
+      openaiApiKey = fs.readFileSync(openaiKeyPath, 'utf8').trim();
+    }
+  }
+} catch (error) {
+  console.error('Error reading API keys:', error);
+}
+
+// Initialize API clients with the keys
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: anthropicApiKey,
 });
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: openaiApiKey,
 });
 
 // Active games tracking
 const activeGames = new Map();
+
+// Shared Socket.IO instance
+let ioInstance;
 
 /**
  * Sets up socket handlers for LLM interactions
@@ -20,6 +51,31 @@ const activeGames = new Map();
  * @param {SocketIO.Socket} socket The individual socket connection
  */
 function setupLLMHandlers(io, socket) {
+  // Store the io instance for use in other functions
+  ioInstance = io;
+  
+  // Global handler for game data requests
+  socket.on('get_game_data', (data) => {
+    console.log('Received get_game_data request:', data);
+    const { gameId } = data;
+    const game = activeGames.get(gameId);
+    if (game) {
+      console.log('Sending game data to client:', {
+        gameId: game.gameId,
+        secretWord: game.secretWord
+      });
+      socket.emit('game_data', { 
+        gameId: game.gameId,
+        secretWord: game.secretWord,
+        team1Role: game.team1.currentRole,
+        team2Role: game.team2.currentRole
+      });
+    } else {
+      console.log('Game not found for ID:', gameId);
+      socket.emit('error', { message: 'Game not found' });
+    }
+  });
+  
   // Handle game creation
   socket.on('create_game', async (data) => {
     try {
@@ -27,19 +83,20 @@ function setupLLMHandlers(io, socket) {
       const gameId = Date.now().toString();
       const secretWord = getRandomWord();
       
-      // Store game state
+      // Store game state with active team concept
       activeGames.set(gameId, {
         gameId,
         secretWord,
+        activeTeam: 1, // Team 1 starts as active
         team1: {
           model: team1Model,
           score: 0,
-          currentRole: 'illustrator'
+          currentRole: 'illustrator' // For backward compatibility
         },
         team2: {
           model: team2Model,
           score: 0,
-          currentRole: 'guesser'
+          currentRole: 'guesser' // For backward compatibility
         },
         round: 1,
         timeRemaining: 60,
@@ -54,7 +111,7 @@ function setupLLMHandlers(io, socket) {
       await generateIllustration(gameId, activeGames.get(gameId));
       
       // Emit game created event
-      io.to(gameId).emit('game_created', { 
+      ioInstance.to(gameId).emit('game_created', { 
         gameId, 
         team1Model, 
         team2Model,
@@ -85,32 +142,40 @@ function setupLLMHandlers(io, socket) {
         // Calculate score based on time remaining
         const scoreToAdd = game.timeRemaining;
         
-        // Update the score for the guessing team
-        if (game.team1.currentRole === 'guesser') {
+        // Update the score for the active team
+        if (game.activeTeam === 1) {
           game.team1.score += scoreToAdd;
+          console.log(`Team 1 scored ${scoreToAdd} points, total: ${game.team1.score}`);
         } else {
           game.team2.score += scoreToAdd;
+          console.log(`Team 2 scored ${scoreToAdd} points, total: ${game.team2.score}`);
         }
         
         // Emit correct guess event
-        io.to(gameId).emit('correct_guess', {
+        ioInstance.to(gameId).emit('correct_guess', {
           guess,
           secretWord: game.secretWord,
           team1Score: game.team1.score,
-          team2Score: game.team2.score
+          team2Score: game.team2.score,
+          activeTeam: game.activeTeam,
+          scoringTeam: game.activeTeam
         });
         
         // Start next round or end game
         startNextRound(gameId, game);
       } else {
         // Just emit the guess to update the UI
-        io.to(gameId).emit('new_guess', { 
+        ioInstance.to(gameId).emit('new_guess', { 
           guess,
           guesses: game.guesses 
         });
         
         // Generate a refined illustration based on the guess
-        await refineIllustration(gameId, game, guess);
+        // Only refine if this team is using an AI as illustrator
+        const illustratorTeam = game.team1.currentRole === 'illustrator' ? game.team1 : game.team2;
+        if (illustratorTeam.model !== 'human') {
+          await refineIllustration(gameId, game, guess);
+        }
       }
     } catch (error) {
       console.error('Error processing guess:', error);
@@ -128,7 +193,7 @@ function setupLLMHandlers(io, socket) {
       
       // If time runs out, start next round
       if (timeRemaining <= 0) {
-        io.to(gameId).emit('time_up', { secretWord: game.secretWord });
+        ioInstance.to(gameId).emit('time_up', { secretWord: game.secretWord });
         startNextRound(gameId, game);
       }
     }
@@ -142,31 +207,54 @@ function setupLLMHandlers(io, socket) {
  */
 async function generateIllustration(gameId, game) {
   try {
-    // Determine which model to use as illustrator
-    const illustratorTeam = game.team1.currentRole === 'illustrator' ? game.team1 : game.team2;
-    const illustratorModel = illustratorTeam.model;
+    // Get the active team
+    const activeTeamNum = game.activeTeam;
+    const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
+    const activeModel = activeTeam.model;
     
-    // Generate the SVG based on the illustrator model
+    // Log the drawing attempt
+    console.log(`Generating illustration for word "${game.secretWord}" by Team ${activeTeamNum} (${activeModel})`);
+    
+    // Generate the SVG based on the active team's model
     let svgContent;
     
-    if (illustratorModel.includes('claude')) {
+    if (activeModel.includes('claude')) {
       svgContent = await generateSvgWithAnthropic(game.secretWord);
-    } else {
+    } else if (activeModel !== 'human') {
       svgContent = await generateSvgWithOpenAI(game.secretWord);
+    } else {
+      // Human illustrator - wait for user input
+      console.log(`Human player Team ${activeTeamNum} needs to illustrate "${game.secretWord}"`);
+      // For now, we'll use a placeholder SVG for human players
+      svgContent = `<svg width="400" height="400" viewBox="0 0 400 400">
+        <rect width="100%" height="100%" fill="#f0f0f0"/>
+        <text x="50%" y="50%" font-size="24" text-anchor="middle">Human player's turn to draw</text>
+      </svg>`;
     }
     
     // Update game state with the SVG
     game.svgImage = svgContent;
     
     // Emit the SVG to clients
-    io.to(gameId).emit('illustration_update', { 
+    ioInstance.to(gameId).emit('illustration_update', { 
       svg: svgContent,
       guesses: game.guesses 
     });
     
+    console.log(`Illustration generated successfully for "${game.secretWord}"`);
+    
+    // Same team will both illustrate and guess
+    if (activeModel !== 'human') {
+      console.log(`Team ${activeTeamNum} (${activeModel}) will now try to guess their own drawing`);
+      // Wait a moment to simulate thinking time
+      setTimeout(() => processGuessWithLLM(gameId, game), 2000);
+    } else {
+      console.log(`Team ${activeTeamNum} (Human) will guess their own drawing`);
+    }
+    
   } catch (error) {
     console.error('Error generating illustration:', error);
-    io.to(gameId).emit('error', { message: 'Failed to generate illustration' });
+    ioInstance.to(gameId).emit('error', { message: 'Failed to generate illustration' });
   }
 }
 
@@ -178,31 +266,47 @@ async function generateIllustration(gameId, game) {
  */
 async function refineIllustration(gameId, game, latestGuess) {
   try {
-    // Determine which model to use as illustrator
-    const illustratorTeam = game.team1.currentRole === 'illustrator' ? game.team1 : game.team2;
-    const illustratorModel = illustratorTeam.model;
+    // Get the active team
+    const activeTeamNum = game.activeTeam;
+    const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
+    const activeModel = activeTeam.model;
     
-    // Generate refined SVG based on the illustrator model and latest guess
+    console.log(`Refining illustration for "${game.secretWord}" by Team ${activeTeamNum} after guess: ${latestGuess}`);
+    
+    // Generate refined SVG based on the active team's model
     let svgContent;
     
-    if (illustratorModel.includes('claude')) {
+    if (activeModel.includes('claude')) {
       svgContent = await refineSvgWithAnthropic(game.secretWord, game.svgImage, latestGuess, game.guesses);
-    } else {
+    } else if (activeModel !== 'human') {
       svgContent = await refineSvgWithOpenAI(game.secretWord, game.svgImage, latestGuess, game.guesses);
+    } else {
+      // Human player doesn't get automatic refinement
+      console.log(`Human player Team ${activeTeamNum} will need to manually refine their drawing`);
+      return; // Exit without updating SVG
     }
     
     // Update game state with the new SVG
     game.svgImage = svgContent;
     
     // Emit the updated SVG to clients
-    io.to(gameId).emit('illustration_update', { 
+    ioInstance.to(gameId).emit('illustration_update', { 
       svg: svgContent,
       guesses: game.guesses 
     });
     
+    console.log(`Illustration refined successfully for "${game.secretWord}"`);
+    
+    // Same team will continue guessing
+    if (activeModel !== 'human') {
+      console.log(`Team ${activeTeamNum} (${activeModel}) will try again with the refined drawing`);
+      // Wait a moment to simulate thinking time
+      setTimeout(() => processGuessWithLLM(gameId, game), 2000);
+    }
+    
   } catch (error) {
     console.error('Error refining illustration:', error);
-    io.to(gameId).emit('error', { message: 'Failed to refine illustration' });
+    ioInstance.to(gameId).emit('error', { message: 'Failed to refine illustration' });
   }
 }
 
@@ -213,28 +317,41 @@ async function refineIllustration(gameId, game, latestGuess) {
  */
 async function processGuessWithLLM(gameId, game) {
   try {
-    // Determine which model to use as guesser
-    const guesserTeam = game.team1.currentRole === 'guesser' ? game.team1 : game.team2;
-    const guesserModel = guesserTeam.model;
+    // Get the active team
+    const activeTeamNum = game.activeTeam;
+    const activeTeam = activeTeamNum === 1 ? game.team1 : game.team2;
+    const activeModel = activeTeam.model;
     
-    // Generate guess based on the guesser model
-    let guess;
-    
-    if (guesserModel.includes('claude')) {
-      guess = await generateGuessWithAnthropic(game.svgImage, game.guesses);
-    } else {
-      guess = await generateGuessWithOpenAI(game.svgImage, game.guesses);
+    // Make sure we have an SVG to analyze
+    if (!game.svgImage) {
+      console.error('No SVG image available for guessing');
+      ioInstance.to(gameId).emit('error', { message: 'No image to analyze for guessing' });
+      return;
     }
     
+    // Generate guess based on the active team's model
+    let guess;
+    
+    if (activeModel.includes('claude')) {
+      guess = await generateGuessWithAnthropic(game.svgImage, game.guesses);
+    } else if (activeModel !== 'human') {
+      guess = await generateGuessWithOpenAI(game.svgImage, game.guesses);
+    } else {
+      console.log(`Human player Team ${activeTeamNum} needs to provide a guess`);
+      return; // Exit without making an AI guess
+    }
+    
+    console.log(`Team ${activeTeamNum} (${activeModel}) guessed: "${guess}"`);
+    
     // Emit the guess event (this will trigger the submit_guess handler)
-    io.to(gameId).emit('llm_guess', { 
+    ioInstance.to(gameId).emit('llm_guess', { 
       guess,
-      model: guesserModel
+      model: activeModel
     });
     
   } catch (error) {
     console.error('Error generating guess:', error);
-    io.to(gameId).emit('error', { message: 'Failed to generate guess' });
+    ioInstance.to(gameId).emit('error', { message: 'Failed to generate guess' });
   }
 }
 
@@ -247,7 +364,7 @@ function startNextRound(gameId, game) {
   // Check if we've reached the max rounds (e.g., 10 rounds)
   if (game.round >= 10) {
     // End the game
-    io.to(gameId).emit('game_over', {
+    ioInstance.to(gameId).emit('game_over', {
       team1Score: game.team1.score,
       team2Score: game.team2.score,
       winner: game.team1.score > game.team2.score ? 'team1' : 'team2'
@@ -261,7 +378,10 @@ function startNextRound(gameId, game) {
   // Increment round
   game.round++;
   
-  // Switch roles
+  // Switch active team
+  game.activeTeam = game.activeTeam === 1 ? 2 : 1;
+  
+  // Keep role switching for backward compatibility
   game.team1.currentRole = game.team1.currentRole === 'illustrator' ? 'guesser' : 'illustrator';
   game.team2.currentRole = game.team2.currentRole === 'illustrator' ? 'guesser' : 'illustrator';
   
@@ -273,11 +393,14 @@ function startNextRound(gameId, game) {
   game.guesses = [];
   game.svgImage = null;
   
+  console.log(`Starting round ${game.round} with Team ${game.activeTeam} active, word: "${game.secretWord}"`);
+  
   // Emit new round event
-  io.to(gameId).emit('new_round', {
+  ioInstance.to(gameId).emit('new_round', {
     round: game.round,
-    team1Role: game.team1.currentRole,
-    team2Role: game.team2.currentRole,
+    activeTeam: game.activeTeam,
+    team1Role: game.team1.currentRole, // For backward compatibility 
+    team2Role: game.team2.currentRole, // For backward compatibility
     team1Score: game.team1.score,
     team2Score: game.team2.score
   });
@@ -295,7 +418,7 @@ function startNextRound(gameId, game) {
  */
 async function generateSvgWithAnthropic(secretWord) {
   const message = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20240620",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 4000,
     system: `You are the Illustrator in a game of Pictionary. Your task is to create an SVG graphic that represents a secret word without using text or direct hints.
     
@@ -330,7 +453,7 @@ async function generateSvgWithAnthropic(secretWord) {
  */
 async function refineSvgWithAnthropic(secretWord, currentSvg, latestGuess, allGuesses) {
   const message = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20240620",
+    model: "claude-3-7-sonnet-20250219", 
     max_tokens: 4000,
     system: `You are the Illustrator in a game of Pictionary. Your task is to refine an SVG graphic based on the guesses to help the Guesser identify the secret word.
     
@@ -361,7 +484,7 @@ async function refineSvgWithAnthropic(secretWord, currentSvg, latestGuess, allGu
  */
 async function generateGuessWithAnthropic(svgContent, previousGuesses) {
   const message = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20240620",
+    model: "claude-3-7-sonnet-20250219",
     max_tokens: 1000,
     system: `You are the Guesser in a game of Pictionary. Your task is to identify the secret word based on an SVG graphic.
     

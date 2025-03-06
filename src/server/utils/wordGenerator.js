@@ -35,11 +35,39 @@ const words = [
   'love', 'peace', 'friendship', 'freedom', 'justice', 'happiness', 'danger', 'competition', 'knowledge', 'dream'
 ];
 
+// Load words from the alpha words dictionary
+const fs = require('fs');
+const path = require('path');
+let alphaWords = [];
+
+try {
+  const alphaWordPath = path.join(__dirname, '../../../words_alpha.txt');
+  if (fs.existsSync(alphaWordPath)) {
+    // Load the word list
+    const wordData = fs.readFileSync(alphaWordPath, 'utf8');
+    alphaWords = wordData.split('\n').filter(word => 
+      // Filter for words between 4-8 characters for better game experience
+      word.length >= 4 && word.length <= 8 && /^[a-z]+$/.test(word)
+    );
+    console.log(`Loaded ${alphaWords.length} words from dictionary.`);
+  }
+} catch (error) {
+  console.error('Error loading alpha words dictionary:', error);
+}
+
 /**
- * Returns a random word from the predefined list
+ * Returns a random word from the dictionary if available, 
+ * otherwise from the predefined list
  * @returns {string} A random word
  */
 function getRandomWord() {
+  // Use alpha words dictionary if available
+  if (alphaWords.length > 0) {
+    const randomIndex = Math.floor(Math.random() * alphaWords.length);
+    return alphaWords[randomIndex];
+  }
+  
+  // Fallback to predefined list
   const randomIndex = Math.floor(Math.random() * words.length);
   return words[randomIndex];
 }

@@ -15,8 +15,9 @@ const startGameBtn = document.getElementById('start-game-btn');
 // Game board elements
 const currentRoundDisplay = document.getElementById('current-round');
 const timerDisplay = document.getElementById('timer');
-const team1RoleDisplay = document.getElementById('team1-role');
-const team2RoleDisplay = document.getElementById('team2-role');
+const activeTeamDisplay = document.getElementById('active-team');
+const currentWordDisplay = document.getElementById('current-word-display');
+const currentWordValue = document.getElementById('current-word');
 const team1ScoreDisplay = document.getElementById('team1-score');
 const team2ScoreDisplay = document.getElementById('team2-score');
 const svgDisplay = document.getElementById('svg-display');
@@ -73,6 +74,7 @@ socket.on('time_up', handleTimeUp);
 socket.on('new_round', handleNewRound);
 socket.on('game_over', handleGameOver);
 socket.on('llm_guess', handleLLMGuess);
+socket.on('game_data', handleGameData);
 socket.on('error', handleError);
 
 // Functions
@@ -102,9 +104,16 @@ function startGame() {
   team2ScoreDisplay.textContent = '0';
   currentRoundDisplay.textContent = '1/10';
   
+  // Update team names to include the model info
+  document.querySelectorAll('.team-name')[0].textContent = `Team 1 (${getModelDisplayName(team1Model)})`;
+  document.querySelectorAll('.team-name')[1].textContent = `Team 2 (${getModelDisplayName(team2Model)})`;
+  
   // Show the game board and hide the setup
   gameSetup.style.display = 'none';
   gameBoard.style.display = 'grid';
+  
+  // Update the game interface based on active team
+  updateGameInterface();
 }
 
 /**
@@ -115,8 +124,26 @@ function handleGameCreated(data) {
   gameState.gameId = data.gameId;
   console.log('Game created:', data);
   
+  // Set active team to Team 1 at start
+  activeTeamDisplay.textContent = 'Team 1';
+  
   // Start the timer
   startTimer();
+  
+  // Update UI based on active team
+  updateGameInterface();
+}
+
+/**
+ * Handles game data received from the server
+ * @param {Object} data The game data
+ */
+function handleGameData(data) {
+  // Update the current word display when receiving game data
+  if (data.secretWord) {
+    currentWordValue.textContent = data.secretWord;
+    console.log('Updated current word display:', data.secretWord);
+  }
 }
 
 /**
@@ -248,9 +275,16 @@ function handleCorrectGuess(data) {
   team1ScoreDisplay.textContent = data.team1Score;
   team2ScoreDisplay.textContent = data.team2Score;
   
+  // Hide current word display
+  currentWordDisplay.style.display = 'none';
+  
   // Show the round result overlay
   resultTitle.textContent = 'Correct Guess!';
-  resultMessage.textContent = `The word was guessed correctly with ${gameState.timeRemaining} seconds remaining.`;
+  
+  // Use the scoring team information if available
+  const scoringTeam = data.scoringTeam ? `Team ${data.scoringTeam}` : activeTeamDisplay.textContent;
+  resultMessage.textContent = `${scoringTeam} guessed correctly with ${gameState.timeRemaining} seconds remaining.`;
+  
   secretWordDisplay.textContent = data.secretWord;
   roundResultOverlay.style.display = 'flex';
 }
@@ -263,9 +297,12 @@ function handleTimeUp(data) {
   // Stop the timer
   clearInterval(gameState.timerInterval);
   
+  // Hide current word display
+  currentWordDisplay.style.display = 'none';
+  
   // Show the round result overlay
   resultTitle.textContent = 'Time\'s Up!';
-  resultMessage.textContent = 'The word was not guessed in time.';
+  resultMessage.textContent = `${activeTeamDisplay.textContent} ran out of time.`;
   secretWordDisplay.textContent = data.secretWord;
   roundResultOverlay.style.display = 'flex';
 }
@@ -284,8 +321,15 @@ function handleNewRound(data) {
   currentRoundDisplay.textContent = `${data.round}/10`;
   team1ScoreDisplay.textContent = data.team1Score;
   team2ScoreDisplay.textContent = data.team2Score;
-  team1RoleDisplay.textContent = capitalizeFirstLetter(data.team1Role);
-  team2RoleDisplay.textContent = capitalizeFirstLetter(data.team2Role);
+  
+  // Use the direct activeTeam value if available, otherwise fallback to role logic
+  if (data.activeTeam) {
+    activeTeamDisplay.textContent = `Team ${data.activeTeam}`;
+  } else {
+    // Fallback for backward compatibility
+    const team1IsIllustrator = data.team1Role === 'illustrator';
+    activeTeamDisplay.textContent = team1IsIllustrator ? 'Team 1' : 'Team 2';
+  }
   
   // Clear the guesses list and SVG display
   guessesList.innerHTML = '';
@@ -293,6 +337,9 @@ function handleNewRound(data) {
   
   // Hide the round result overlay
   roundResultOverlay.style.display = 'none';
+  
+  // Update game interface for the new active team
+  updateGameInterface();
   
   // Start the timer for the new round
   startTimer();
@@ -380,4 +427,53 @@ function resetGame() {
  */
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Get a display name for a model
+ * @param {string} modelId The model ID
+ * @returns {string} A human-readable model name
+ */
+function getModelDisplayName(modelId) {
+  if (modelId === 'human') return 'Human';
+  if (modelId === 'claude-3-7-sonnet-20250219') return 'Claude 3.7';
+  if (modelId === 'gpt-4o') return 'GPT-4o';
+  return modelId;
+}
+
+/**
+ * Updates the game interface based on which team is active
+ */
+function updateGameInterface() {
+  const guessInputContainer = document.querySelector('.guess-input-container');
+  if (!guessInputContainer) return; // Exit if element doesn't exist yet
+  
+  // Determine which teams are human players
+  const team1IsHuman = gameState.team1Model === 'human';
+  const team2IsHuman = gameState.team2Model === 'human';
+  
+  if (!team1IsHuman && !team2IsHuman) {
+    // If no human players, hide input and show both teams as AI
+    guessInputContainer.style.display = 'none';
+    currentWordDisplay.style.display = 'none';
+    return;
+  }
+  
+  // Determine which team is active
+  const isTeam1Active = activeTeamDisplay.textContent.trim() === 'Team 1';
+  const activeTeamIsHuman = isTeam1Active ? team1IsHuman : team2IsHuman;
+  
+  // Only show guess input for human players when their team is active
+  guessInputContainer.style.display = activeTeamIsHuman ? 'flex' : 'none';
+  
+  // Display the current word when it's a human player's turn
+  if (activeTeamIsHuman && gameState.gameId) {
+    console.log('Requesting game data for word display');
+    // Request the current game data from the server
+    socket.emit('get_game_data', { gameId: gameState.gameId });
+    currentWordDisplay.style.display = 'block';
+  } else {
+    console.log('Hiding word display');
+    currentWordDisplay.style.display = 'none';
+  }
 }

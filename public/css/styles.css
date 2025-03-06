@@ -98,6 +98,17 @@ h1 {
   gap: 10px;
 }
 
+.info-text {
+  margin: 15px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--primary-color);
+}
+
 label {
   font-weight: 500;
 }
@@ -180,6 +191,18 @@ label {
 #svg-display {
   max-width: 400px;
   max-height: 400px;
+}
+
+.secret-word {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+#current-word-display {
+  background-color: #fff4e0;
+  border-left: 3px solid var(--accent-color);
+  border-radius: var(--border-radius);
+  padding: 0 10px;
 }
 
 /* Guesses panel */
