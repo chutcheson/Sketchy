@@ -395,7 +395,7 @@ function startNextRound(gameId, game) {
   
   console.log(`Starting round ${game.round} with Team ${game.activeTeam} active, word: "${game.secretWord}"`);
   
-  // Emit new round event
+  // First, emit the new round event to clear the UI
   ioInstance.to(gameId).emit('new_round', {
     round: game.round,
     activeTeam: game.activeTeam,
@@ -405,8 +405,11 @@ function startNextRound(gameId, game) {
     team2Score: game.team2.score
   });
   
-  // Generate a new illustration for the new round
-  generateIllustration(gameId, game);
+  // Slight delay before generating a new illustration to ensure UI is cleared
+  setTimeout(() => {
+    // Generate a new illustration for the new round
+    generateIllustration(gameId, game);
+  }, 500); // 500ms delay to ensure client has time to clear previous content
 }
 
 // LLM API integration functions

@@ -357,8 +357,11 @@ function handleNewRound(data) {
   
   // Clear the guesses list, SVG display, and any pending guess input
   guessesList.innerHTML = '';
-  svgDisplay.innerHTML = '';
+  svgDisplay.innerHTML = '<div class="loading-svg">Loading new drawing...</div>';
   guessInput.value = ''; // Clear any pending guess from previous round
+  
+  // Store an empty guesses array in game state 
+  gameState.guesses = [];
   
   // Make sure notification is hidden
   notificationToast.style.display = 'none';
