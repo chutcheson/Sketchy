@@ -148,10 +148,31 @@ function handleGameCreated(data) {
 function handleGameData(data) {
   // Update the current word display when receiving game data
   if (data.secretWord) {
-    // Update both word displays
+    // Update the current word display for human drawers
     currentWordValue.textContent = data.secretWord;
-    gameWordDisplay.textContent = data.secretWord;
-    console.log('Updated word displays:', data.secretWord);
+    
+    // Only update the game word display if both teams are AI models
+    // This ensures human players watching the game can see the word
+    // but the active AI team can't "see" it
+    const team1IsHuman = gameState.team1Model === 'human';
+    const team2IsHuman = gameState.team2Model === 'human';
+    
+    if (!team1IsHuman && !team2IsHuman) {
+      // Both teams are AI, so we can show the word to the human watchers
+      gameWordDisplay.textContent = data.secretWord;
+    } else {
+      // At least one human player, so we need to be more careful
+      // We'll use a different approach based on who's active
+      const isTeam1Active = activeTeamDisplay.textContent.trim() === 'Team 1';
+      const activeTeamIsHuman = isTeam1Active ? team1IsHuman : team2IsHuman;
+      
+      if (!activeTeamIsHuman) {
+        // Active team is AI, so we can show the word to humans
+        gameWordDisplay.textContent = data.secretWord;
+      }
+    }
+    
+    console.log('Updated word displays with', data.secretWord);
   }
 }
 
@@ -506,8 +527,14 @@ function updateGameInterface() {
   const team1IsHuman = gameState.team1Model === 'human';
   const team2IsHuman = gameState.team2Model === 'human';
   
+  // ALWAYS request game data to get the word
+  if (gameState.gameId) {
+    console.log('Requesting game data for word display');
+    socket.emit('get_game_data', { gameId: gameState.gameId });
+  }
+  
   if (!team1IsHuman && !team2IsHuman) {
-    // If no human players, hide input and show both teams as AI
+    // If no human players, hide input and special word display for drawers
     guessInputContainer.style.display = 'none';
     currentWordDisplay.style.display = 'none';
     return;
@@ -520,14 +547,11 @@ function updateGameInterface() {
   // Only show guess input for human players when their team is active
   guessInputContainer.style.display = activeTeamIsHuman ? 'flex' : 'none';
   
-  // Display the current word when it's a human player's turn
+  // Display the special word box only when it's a human player's turn to draw
   if (activeTeamIsHuman && gameState.gameId) {
-    console.log('Requesting game data for word display');
-    // Request the current game data from the server
-    socket.emit('get_game_data', { gameId: gameState.gameId });
     currentWordDisplay.style.display = 'block';
   } else {
-    console.log('Hiding word display');
+    console.log('Hiding special word display');
     currentWordDisplay.style.display = 'none';
   }
 }
