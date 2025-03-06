@@ -222,12 +222,11 @@ label {
   border: 2px solid var(--text-color);
   box-shadow: 4px 4px 0 var(--text-color);
   padding: 15px 20px;
-  /* Brutalist paper-tear effect */
+  /* Removed triangular cutout for cleaner look */
   clip-path: polygon(
     0 0, 
     100% 0, 
-    100% 85%, 
-    95% 100%, 
+    100% 100%, 
     0 100%
   );
 }
