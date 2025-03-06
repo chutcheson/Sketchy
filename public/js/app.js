@@ -16,6 +16,7 @@ const startGameBtn = document.getElementById('start-game-btn');
 const currentRoundDisplay = document.getElementById('current-round');
 const timerDisplay = document.getElementById('timer');
 const activeTeamDisplay = document.getElementById('active-team');
+const gameWordDisplay = document.getElementById('game-word');
 const currentWordDisplay = document.getElementById('current-word-display');
 const currentWordValue = document.getElementById('current-word');
 const team1ScoreDisplay = document.getElementById('team1-score');
@@ -147,8 +148,10 @@ function handleGameCreated(data) {
 function handleGameData(data) {
   // Update the current word display when receiving game data
   if (data.secretWord) {
+    // Update both word displays
     currentWordValue.textContent = data.secretWord;
-    console.log('Updated current word display:', data.secretWord);
+    gameWordDisplay.textContent = data.secretWord;
+    console.log('Updated word displays:', data.secretWord);
   }
 }
 
@@ -281,8 +284,11 @@ function handleCorrectGuess(data) {
   team1ScoreDisplay.textContent = data.team1Score;
   team2ScoreDisplay.textContent = data.team2Score;
   
-  // Hide current word display
+  // Hide current word display for human players
   currentWordDisplay.style.display = 'none';
+  
+  // Reset game word to "???" for next round
+  gameWordDisplay.textContent = '???';
   
   // Clear any pending guess input
   guessInput.value = '';
@@ -315,6 +321,9 @@ function handleTimeUp(data) {
   // Hide current word display
   currentWordDisplay.style.display = 'none';
   
+  // Reset game word to "???" for next round
+  gameWordDisplay.textContent = '???';
+  
   // Clear any pending guess input
   guessInput.value = '';
   
@@ -345,6 +354,9 @@ function handleNewRound(data) {
   currentRoundDisplay.textContent = `${data.round}/10`;
   team1ScoreDisplay.textContent = data.team1Score;
   team2ScoreDisplay.textContent = data.team2Score;
+  
+  // Reset word display to ??? at start of round
+  gameWordDisplay.textContent = '???';
   
   // Use the direct activeTeam value if available, otherwise fallback to role logic
   if (data.activeTeam) {
