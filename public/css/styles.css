@@ -1,16 +1,24 @@
-/* Base styles and resets */
+/* Base styles and resets - Wabi-Sabi and Brutalist aesthetic */
 :root {
-  --primary-color: #3498db;
-  --secondary-color: #2ecc71;
-  --accent-color: #f39c12;
-  --background-color: #f5f5f5;
-  --card-background: #fff;
-  --text-color: #333;
-  --border-color: #ddd;
-  --success-color: #27ae60;
-  --error-color: #e74c3c;
-  --border-radius: 8px;
-  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  /* Main color palette */
+  --primary-color: #7E8060; /* Muted olive green */
+  --secondary-color: #B5816D; /* Dusty terracotta */
+  --accent-color: #AE6C58; /* Rustic copper */
+  --background-color: #EDE4D8; /* Pale cream */
+  --card-background: #e5ded2; /* Lighter cream for cards */
+  --text-color: #4B4A47; /* Soft charcoal */
+  --border-color: #9a9488; /* Muted border */
+  
+  /* Functional colors */
+  --success-color: #7E8060; /* Using olive for success */
+  --error-color: #B5816D; /* Using terracotta for errors */
+  
+  /* Design elements */
+  --border-radius: 2px; /* More angular, brutalist approach */
+  --shadow: 0 3px 10px rgba(75, 74, 71, 0.15); /* Slightly deeper shadow */
+  
+  /* Texture variables */
+  --texture-opacity: 0.04; /* Subtle paper texture */
 }
 
 * {
@@ -19,33 +27,55 @@
   box-sizing: border-box;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
 body {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--background-color);
+  position: relative;
+}
+
+/* Paper texture overlay for wabi-sabi look */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23A19E94' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3Cpath d='M520-140L578.5 42.5 731-63M603 493L539 269 237 261 370 105M902 382L539 269M390 382L102 382'/%3E%3Cpath d='M-222 42L126.5 79.5 370 105 539 269 577.5 41.5 927 80 769 229 902 382 603 493 731 737M295-36L577.5 41.5M578 842L295 764M40-201L127 80M102 382L-261 269'/%3E%3C/g%3E%3Cg fill='%23A9A59B'%3E%3Ccircle cx='769' cy='229' r='5'/%3E%3Ccircle cx='539' cy='269' r='5'/%3E%3Ccircle cx='603' cy='493' r='5'/%3E%3Ccircle cx='731' cy='737' r='5'/%3E%3Ccircle cx='520' cy='660' r='5'/%3E%3Ccircle cx='309' cy='538' r='5'/%3E%3Ccircle cx='295' cy='764' r='5'/%3E%3Ccircle cx='40' cy='599' r='5'/%3E%3Ccircle cx='102' cy='382' r='5'/%3E%3Ccircle cx='127' cy='80' r='5'/%3E%3Ccircle cx='370' cy='105' r='5'/%3E%3Ccircle cx='578' cy='42' r='5'/%3E%3Ccircle cx='237' cy='261' r='5'/%3E%3Ccircle cx='390' cy='382' r='5'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: var(--texture-opacity);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  position: relative;
 }
 
-/* Header styles */
+/* Header styles - Brutalist approach */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 15px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 3px solid var(--text-color);
 }
 
 h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--primary-color);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-color);
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  /* Slight text shadow for depth */
+  text-shadow: 1px 1px 0px rgba(75, 74, 71, 0.1);
 }
 
 .score-container {
@@ -65,9 +95,10 @@ h1 {
 }
 
 .score {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-color);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-color);
+  letter-spacing: -0.5px;
 }
 
 .score-divider {
@@ -79,10 +110,22 @@ h1 {
 /* Game setup styles */
 .game-setup {
   background-color: var(--card-background);
-  border-radius: var(--border-radius);
+  border: 2px solid var(--text-color);
   box-shadow: var(--shadow);
   padding: 30px;
   margin-bottom: 30px;
+  position: relative;
+}
+
+/* Wabi-Sabi imperfection - asymmetric design element */
+.game-setup::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 60px;
+  height: 8px;
+  background-color: var(--accent-color);
 }
 
 .setup-form {
@@ -100,13 +143,28 @@ h1 {
 
 .info-text {
   margin: 15px 0;
-  color: #666;
+  color: var(--text-color);
   font-size: 14px;
-  line-height: 1.4;
-  padding: 10px;
-  background-color: #f8f8f8;
-  border-radius: var(--border-radius);
-  border-left: 3px solid var(--primary-color);
+  line-height: 1.5;
+  padding: 12px 15px;
+  background-color: transparent;
+  border: 1px solid var(--text-color);
+  font-family: 'Space Mono', monospace;
+  position: relative;
+}
+
+/* Wabi-Sabi torn edge effect */
+.info-text::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  right: 15px;
+  width: 30px;
+  height: 10px;
+  background-color: var(--card-background);
+  border-left: 1px solid var(--text-color);
+  border-bottom: 1px solid var(--text-color);
+  transform: rotate(15deg);
 }
 
 label {
@@ -115,26 +173,36 @@ label {
 
 .model-select {
   padding: 12px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--text-color);
   background-color: var(--card-background);
   font-size: 16px;
+  font-family: 'Space Mono', monospace;
+  cursor: pointer;
+  /* Brutalist approach with no rounded corners */
+  border-radius: 0;
 }
 
 .primary-btn {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  background-color: var(--accent-color);
+  color: var(--background-color);
+  border: 2px solid var(--text-color);
   padding: 12px 24px;
-  border-radius: var(--border-radius);
+  border-radius: 0; /* Brutalist approach */
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  position: relative;
+  /* Slight offset for depth */
+  box-shadow: 3px 3px 0 var(--text-color);
 }
 
 .primary-btn:hover {
-  background-color: #2980b9;
+  background-color: var(--secondary-color);
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--text-color);
 }
 
 /* Game board styles */
@@ -151,25 +219,52 @@ label {
   display: flex;
   justify-content: space-between;
   background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--text-color);
+  box-shadow: 4px 4px 0 var(--text-color);
   padding: 15px 20px;
+  /* Brutalist paper-tear effect */
+  clip-path: polygon(
+    0 0, 
+    100% 0, 
+    100% 85%, 
+    95% 100%, 
+    0 100%
+  );
 }
 
 .round-info, .timer-container, .role-info, .game-word-container, .active-team-container {
   text-align: center;
+  position: relative;
+  padding: 0 10px;
+}
+
+/* Vertical separators - Brutalist approach */
+.timer-container::before,
+.active-team-container::before,
+.game-word-container::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: var(--text-color);
+  opacity: 0.7;
 }
 
 .label {
-  font-size: 14px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
   color: var(--text-color);
-  opacity: 0.7;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
 }
 
 .value {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 #timer {
@@ -181,30 +276,61 @@ label {
   font-weight: bold;
 }
 
-/* Illustration container */
+/* Illustration container - Wabi-Sabi approach with intentional imperfections */
 .illustration-container {
-  background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
+  background-color: #f7f4ed; /* Slightly different color for canvas */
+  border: 2px solid var(--text-color);
+  padding: 25px;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 450px;
+  position: relative;
+  box-shadow: 6px 6px 0 var(--text-color);
+  overflow: hidden;
+}
+
+/* Paper texture for drawing area */
+.illustration-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23bbb6aa' fill-opacity='0.07' fill-rule='evenodd'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Wabi-Sabi torn edges */
+.illustration-container::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  right: 30px;
+  width: 80px;
+  height: 12px;
+  background-color: var(--background-color);
+  transform: rotate(-2deg);
+  z-index: 2;
 }
 
 #svg-display {
   max-width: 400px;
   max-height: 400px;
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .loading-svg {
-  color: #888;
-  font-style: italic;
+  color: var(--text-color);
+  font-family: 'Space Mono', monospace;
   padding: 20px;
   text-align: center;
   font-size: 16px;
+  opacity: 0.7;
 }
 
 .secret-word {
@@ -213,26 +339,55 @@ label {
 }
 
 #current-word-display {
-  background-color: #fff4e0;
-  border-left: 3px solid var(--accent-color);
-  border-radius: var(--border-radius);
-  padding: 0 10px;
+  background-color: transparent;
+  border: 2px solid var(--accent-color);
+  padding: 5px 10px;
+  position: relative;
 }
 
-/* Guesses panel */
+/* Wabi-Sabi asymmetry */
+#current-word-display::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-color);
+}
+
+/* Guesses panel - Brutalist approach */
 .guesses-panel {
   background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--text-color);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 6px 6px 0 var(--text-color);
+  position: relative;
+}
+
+/* Brutalist marker */
+.guesses-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  height: 8px;
+  width: 30px;
+  background-color: var(--secondary-color);
 }
 
 .guesses-panel h3 {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-size: 18px;
-  color: var(--primary-color);
+  font-weight: 800;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Space Mono', monospace;
+  border-bottom: 2px solid var(--text-color);
+  padding-bottom: 10px;
 }
 
 .guesses-list {
@@ -243,16 +398,33 @@ label {
 }
 
 .guess-item {
-  padding: 10px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 10px 12px;
+  border-bottom: 1px dashed var(--text-color);
   display: flex;
   align-items: center;
+  position: relative;
+  margin-bottom: 5px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* Wabi-Sabi imperfection - some items have an asymmetric style */
+.guess-item:nth-child(3n+1)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background-color: var(--secondary-color);
+  opacity: 0.7;
 }
 
 .guess-item.correct {
-  background-color: rgba(46, 204, 113, 0.1);
+  background-color: rgba(126, 128, 96, 0.15);
   color: var(--success-color);
-  font-weight: 500;
+  font-weight: 700;
+  border-bottom: 2px solid var(--success-color);
 }
 
 .guess-text {
@@ -267,44 +439,59 @@ label {
 .guess-input-container {
   display: flex;
   gap: 10px;
+  margin-top: 5px;
 }
 
 #guess-input {
   flex-grow: 1;
-  padding: 10px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  padding: 12px;
+  border: 2px solid var(--text-color);
   font-size: 14px;
+  font-family: 'Space Mono', monospace;
+  background-color: #f7f4ed;
 }
 
 .action-btn {
   background-color: var(--secondary-color);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: var(--border-radius);
+  color: var(--background-color);
+  border: 2px solid var(--text-color);
+  padding: 8px 15px;
   font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  position: relative;
+  /* Slight offset for depth */
+  box-shadow: 3px 3px 0 var(--text-color);
 }
 
 .action-btn:hover {
-  background-color: #27ae60;
+  background-color: var(--accent-color);
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--text-color);
 }
 
-/* Notification toast */
+/* Notification toast - Wabi-Sabi approach */
 .notification-toast {
   position: fixed;
   top: 20px;
   right: 20px;
   background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  border-left: 4px solid var(--success-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--text-color);
+  box-shadow: 6px 6px 0 var(--text-color);
   padding: 15px 20px;
   max-width: 350px;
   z-index: 1000;
   animation: slideIn 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
+  /* Brutalist asymmetry */
+  clip-path: polygon(
+    0 0, 
+    100% 0, 
+    100% 90%, 
+    90% 100%, 
+    0 100%
+  );
 }
 
 @keyframes slideIn {
@@ -319,42 +506,100 @@ label {
 
 .notification-content h3 {
   margin-top: 0;
-  margin-bottom: 8px;
-  color: var(--success-color);
+  margin-bottom: 10px;
+  color: var(--text-color);
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 16px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Wabi-Sabi asymmetric underline */
+.notification-content h3::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 70%;
+  height: 2px;
+  background-color: var(--accent-color);
 }
 
 .notification-content p {
   margin: 5px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-/* Overlay styles */
+/* Overlay styles - Brutalist approach */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(75, 74, 71, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(3px);
 }
 
 .result-container {
   background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: 30px;
+  border: 3px solid var(--text-color);
+  box-shadow: 8px 8px 0 var(--text-color);
+  padding: 35px;
   max-width: 500px;
   width: 90%;
   text-align: center;
+  position: relative;
+  
+  /* Brutalist design elements */
+  clip-path: polygon(
+    0 0, 
+    100% 0, 
+    100% 95%, 
+    95% 100%, 
+    0 100%
+  );
+}
+
+/* Wabi-Sabi decorative accent */
+.result-container::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 40px;
+  width: 30px;
+  height: 8px;
+  background-color: var(--accent-color);
 }
 
 .result-container h2 {
-  font-size: 24px;
-  margin-bottom: 15px;
-  color: var(--primary-color);
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Space Mono', monospace;
+  position: relative;
+  display: inline-block;
+}
+
+/* Brutalist underline */
+.result-container h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--accent-color);
 }
 
 .result-container p {
