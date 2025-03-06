@@ -278,6 +278,41 @@ label {
   background-color: #27ae60;
 }
 
+/* Notification toast */
+.notification-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--success-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 15px 20px;
+  max-width: 350px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+.notification-content h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--success-color);
+}
+
+.notification-content p {
+  margin: 5px 0;
+}
+
 /* Overlay styles */
 .overlay {
   position: fixed;

@@ -25,11 +25,11 @@ const guessesList = document.getElementById('guesses-list');
 const guessInput = document.getElementById('guess-input');
 const submitGuessBtn = document.getElementById('submit-guess-btn');
 
-// Round result elements
-const resultTitle = document.getElementById('result-title');
-const resultMessage = document.getElementById('result-message');
+// Notification elements
+const notificationToast = document.getElementById('notification-toast');
+const notificationTitle = document.getElementById('notification-title');
+const notificationMessage = document.getElementById('notification-message');
 const secretWordDisplay = document.getElementById('secret-word');
-const nextRoundBtn = document.getElementById('next-round-btn');
 
 // Game over elements
 const finalTeam1ScoreDisplay = document.getElementById('final-team1-score');
@@ -58,7 +58,6 @@ guessInput.addEventListener('keypress', (e) => {
     submitGuess();
   }
 });
-nextRoundBtn.addEventListener('click', startNextRound);
 newGameBtn.addEventListener('click', resetGame);
 
 // Socket event listeners
@@ -285,15 +284,21 @@ function handleCorrectGuess(data) {
   // Hide current word display
   currentWordDisplay.style.display = 'none';
   
-  // Show the round result overlay
-  resultTitle.textContent = 'Correct Guess!';
+  // Show the notification toast
+  notificationTitle.textContent = 'Correct Guess!';
   
   // Use the scoring team information if available
   const scoringTeam = data.scoringTeam ? `Team ${data.scoringTeam}` : activeTeamDisplay.textContent;
-  resultMessage.textContent = `${scoringTeam} guessed correctly with ${gameState.timeRemaining} seconds remaining.`;
+  notificationMessage.textContent = `${scoringTeam} guessed correctly with ${gameState.timeRemaining} seconds remaining.`;
   
   secretWordDisplay.textContent = data.secretWord;
-  roundResultOverlay.style.display = 'flex';
+  notificationToast.style.display = 'block';
+  
+  // Automatically start next round after 4 seconds
+  setTimeout(() => {
+    notificationToast.style.display = 'none';
+    startNextRound();
+  }, 4000);
 }
 
 /**
@@ -307,11 +312,17 @@ function handleTimeUp(data) {
   // Hide current word display
   currentWordDisplay.style.display = 'none';
   
-  // Show the round result overlay
-  resultTitle.textContent = 'Time\'s Up!';
-  resultMessage.textContent = `${activeTeamDisplay.textContent} ran out of time.`;
+  // Show the notification toast
+  notificationTitle.textContent = 'Time\'s Up!';
+  notificationMessage.textContent = `${activeTeamDisplay.textContent} ran out of time.`;
   secretWordDisplay.textContent = data.secretWord;
-  roundResultOverlay.style.display = 'flex';
+  notificationToast.style.display = 'block';
+  
+  // Automatically start next round after 4 seconds
+  setTimeout(() => {
+    notificationToast.style.display = 'none';
+    startNextRound();
+  }, 4000);
 }
 
 /**
@@ -342,8 +353,8 @@ function handleNewRound(data) {
   guessesList.innerHTML = '';
   svgDisplay.innerHTML = '';
   
-  // Hide the round result overlay
-  roundResultOverlay.style.display = 'none';
+  // Make sure notification is hidden
+  notificationToast.style.display = 'none';
   
   // Update game interface for the new active team
   updateGameInterface();
@@ -409,8 +420,7 @@ function handleError(data) {
  * Starts the next round
  */
 function startNextRound() {
-  // Hide the round result overlay
-  roundResultOverlay.style.display = 'none';
+  // Nothing needed here as the new round is handled by the server event
 }
 
 /**
