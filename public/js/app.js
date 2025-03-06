@@ -128,6 +128,15 @@ function handleGameCreated(data) {
   // Set active team to Team 1 at start
   activeTeamDisplay.textContent = 'Team 1';
   
+  // Initialize the turn ID if provided, otherwise generate one
+  if (data.turnId) {
+    gameState.currentTurnId = data.turnId;
+    console.log(`Initialized turn ID from server: ${gameState.currentTurnId}`);
+  } else {
+    gameState.currentTurnId = `turn-${Date.now()}`;
+    console.log(`Generated new client turn ID: ${gameState.currentTurnId}`);
+  }
+  
   // Immediately request game data for human players (needed to see the word)
   if (gameState.team1Model === 'human') {
     console.log('Requesting game data for human player on Team 1');
@@ -233,7 +242,11 @@ function submitGuess() {
  * @param {Object} data The event data containing the SVG and guesses
  */
 function handleIllustrationUpdate(data) {
-  // Validate turn ID if present
+  // Log all illustration updates for debugging
+  console.log(`Received illustration update. Current turn: ${gameState.currentTurnId}, Data turn: ${data.turnId || 'not provided'}`);
+  
+  // Only validate if both turnIds are present, otherwise accept the update
+  // This ensures backward compatibility and prevents updates from being blocked unnecessarily
   if (data.turnId && gameState.currentTurnId && data.turnId !== gameState.currentTurnId) {
     console.log(`Received outdated illustration (turn ${data.turnId}, current ${gameState.currentTurnId}) - ignoring`);
     return; // Ignore outdated illustrations
@@ -244,6 +257,9 @@ function handleIllustrationUpdate(data) {
   
   // Update guesses list
   updateGuessesList(data.guesses);
+  
+  // Log success
+  console.log("Successfully updated illustration");
 }
 
 /**
@@ -293,7 +309,11 @@ function handleNewGuess(data) {
  * @param {Object} data The event data
  */
 function handleLLMGuess(data) {
-  // Validate turn ID if present
+  // Log all guess events for debugging
+  console.log(`Received LLM guess: "${data.guess}". Current turn: ${gameState.currentTurnId}, Data turn: ${data.turnId || 'not provided'}`);
+  
+  // Only validate if both turnIds are present, otherwise accept the guess
+  // This ensures backward compatibility and prevents guesses from being blocked unnecessarily
   if (data.turnId && gameState.currentTurnId && data.turnId !== gameState.currentTurnId) {
     console.log(`Received outdated guess (turn ${data.turnId}, current ${gameState.currentTurnId}) - ignoring`);
     return; // Ignore outdated guesses
@@ -302,6 +322,9 @@ function handleLLMGuess(data) {
   // Display the guess in the input field and then submit it
   guessInput.value = data.guess;
   submitGuess();
+  
+  // Log success
+  console.log(`Successfully processed LLM guess: "${data.guess}"`);
 }
 
 /**
@@ -384,9 +407,14 @@ function handleNewRound(data) {
   gameState.team1Score = data.team1Score;
   gameState.team2Score = data.team2Score;
   
-  // Generate a new turnId for this round
-  gameState.currentTurnId = `turn-${Date.now()}`;
-  console.log(`Starting new round with turn ID: ${gameState.currentTurnId}`);
+  // Use the server-provided turn ID if available, otherwise generate one
+  if (data.turnId) {
+    gameState.currentTurnId = data.turnId;
+    console.log(`Using server turn ID for new round: ${gameState.currentTurnId}`);
+  } else {
+    gameState.currentTurnId = `turn-${Date.now()}`;
+    console.log(`Generated client turn ID for new round: ${gameState.currentTurnId}`);
+  }
   
   // Update UI
   currentRoundDisplay.textContent = `${data.round}/10`;

@@ -114,7 +114,8 @@ function setupLLMHandlers(io, socket) {
         gameId, 
         team1Model, 
         team2Model,
-        round: 1
+        round: 1,
+        turnId: activeGames.get(gameId).turnId // Include the turn ID
       });
       
       // Start the game by requesting the first SVG from the illustrator
@@ -485,7 +486,8 @@ function startNextRound(gameId, game) {
     team1Role: game.team1.currentRole, // For backward compatibility 
     team2Role: game.team2.currentRole, // For backward compatibility
     team1Score: game.team1.score,
-    team2Score: game.team2.score
+    team2Score: game.team2.score,
+    turnId: game.turnId // Include the turn ID for client validation
   });
   
   // Slight delay before generating a new illustration to ensure UI is cleared
