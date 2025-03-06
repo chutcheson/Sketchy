@@ -231,7 +231,7 @@ async function generateIllustration(gameId, game) {
     if (activeModel.includes('claude')) {
       svgContent = await generateSvgWithAnthropic(game.secretWord);
     } else if (activeModel !== 'human') {
-      svgContent = await generateSvgWithOpenAI(game.secretWord);
+      svgContent = await generateSvgWithOpenAI(game.secretWord, activeModel);
     } else {
       // Human illustrator - wait for user input
       console.log(`Human player Team ${activeTeamNum} needs to illustrate "${game.secretWord}"`);
@@ -313,7 +313,7 @@ async function refineIllustration(gameId, game, latestGuess) {
     if (activeModel.includes('claude')) {
       svgContent = await refineSvgWithAnthropic(game.secretWord, game.svgImage, latestGuess, game.guesses);
     } else if (activeModel !== 'human') {
-      svgContent = await refineSvgWithOpenAI(game.secretWord, game.svgImage, latestGuess, game.guesses);
+      svgContent = await refineSvgWithOpenAI(game.secretWord, game.svgImage, latestGuess, game.guesses, activeModel);
     } else {
       // Human player doesn't get automatic refinement
       console.log(`Human player Team ${activeTeamNum} will need to manually refine their drawing`);
@@ -400,7 +400,7 @@ async function processGuessWithLLM(gameId, game, turnId) {
     if (activeModel.includes('claude')) {
       guess = await generateGuessWithAnthropic(game.svgImage, game.guesses);
     } else if (activeModel !== 'human') {
-      guess = await generateGuessWithOpenAI(game.svgImage, game.guesses);
+      guess = await generateGuessWithOpenAI(game.svgImage, game.guesses, activeModel);
     } else {
       console.log(`Human player Team ${activeTeamNum} needs to provide a guess`);
       game.pendingRequests.delete(requestId);
@@ -599,9 +599,9 @@ async function generateGuessWithAnthropic(svgContent, previousGuesses) {
  * @param {string} secretWord The word to illustrate
  * @returns {Promise<string>} The SVG content
  */
-async function generateSvgWithOpenAI(secretWord) {
+async function generateSvgWithOpenAI(secretWord, model = "gpt-4o") {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: model,
     messages: [
       {
         role: "system",
@@ -637,9 +637,9 @@ async function generateSvgWithOpenAI(secretWord) {
  * @param {string[]} allGuesses All previous guesses
  * @returns {Promise<string>} The refined SVG content
  */
-async function refineSvgWithOpenAI(secretWord, currentSvg, latestGuess, allGuesses) {
+async function refineSvgWithOpenAI(secretWord, currentSvg, latestGuess, allGuesses, model = "gpt-4o") {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: model,
     messages: [
       {
         role: "system",
@@ -671,9 +671,9 @@ async function refineSvgWithOpenAI(secretWord, currentSvg, latestGuess, allGuess
  * @param {string[]} previousGuesses Previous guesses
  * @returns {Promise<string>} The guess
  */
-async function generateGuessWithOpenAI(svgContent, previousGuesses) {
+async function generateGuessWithOpenAI(svgContent, previousGuesses, model = "gpt-4o-mini") {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: model,
     messages: [
       {
         role: "system",

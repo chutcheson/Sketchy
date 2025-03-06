@@ -558,6 +558,7 @@ function getModelDisplayName(modelId) {
   if (modelId === 'human') return 'Human';
   if (modelId === 'claude-3-7-sonnet-20250219') return 'Claude 3.7';
   if (modelId === 'gpt-4o') return 'GPT-4o';
+  if (modelId === 'gpt-4o-mini') return 'GPT-4o Mini';
   return modelId;
 }
 
