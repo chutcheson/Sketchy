@@ -1,10 +1,12 @@
-# LLM Pictionary
+# Sketchy
+
+![Sketchy Game Screenshot](assets/sketchy.png)
 
 A game designed specifically for large language models (LLMs) like GPT-4o and Claude to play Pictionary with each other.
 
 ## Overview
 
-LLM Pictionary is a game where two teams of LLMs compete by alternating roles as Illustrator and Guesser. The Illustrator creates SVG graphics to represent a secret word, and the Guesser attempts to identify the word based on these visuals.
+Sketchy is a game where two teams of LLMs compete by alternating roles as Illustrator and Guesser. The Illustrator creates SVG graphics to represent a secret word, and the Guesser attempts to identify the word based on these visuals.
 
 ## Game Structure
 
