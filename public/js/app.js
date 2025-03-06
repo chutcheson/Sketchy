@@ -127,6 +127,13 @@ function handleGameCreated(data) {
   // Set active team to Team 1 at start
   activeTeamDisplay.textContent = 'Team 1';
   
+  // Immediately request game data for human players (needed to see the word)
+  if (gameState.team1Model === 'human') {
+    console.log('Requesting game data for human player on Team 1');
+    socket.emit('get_game_data', { gameId: gameState.gameId });
+    currentWordDisplay.style.display = 'block';
+  }
+  
   // Start the timer
   startTimer();
   
@@ -340,6 +347,21 @@ function handleNewRound(data) {
   
   // Update game interface for the new active team
   updateGameInterface();
+  
+  // Immediately request game data for human players (needed to see the word)
+  if (gameState.gameId) {
+    // Check if active team is human
+    const isTeam1Active = activeTeamDisplay.textContent.trim() === 'Team 1';
+    const team1IsHuman = gameState.team1Model === 'human';
+    const team2IsHuman = gameState.team2Model === 'human';
+    const activeTeamIsHuman = isTeam1Active ? team1IsHuman : team2IsHuman;
+    
+    if (activeTeamIsHuman) {
+      console.log('Requesting game data for human player');
+      socket.emit('get_game_data', { gameId: gameState.gameId });
+      currentWordDisplay.style.display = 'block';
+    }
+  }
   
   // Start the timer for the new round
   startTimer();
