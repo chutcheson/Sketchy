@@ -510,7 +510,7 @@ async function generateSvgWithAnthropic(secretWord) {
     max_tokens: 4000,
     system: `You are the Illustrator in a game of Pictionary. Your task is to create an SVG graphic that represents a secret word without using text or direct hints.
     
-    The SVG should be clear enough for the Guesser to identify the word, but abstract enough to make it challenging.
+    The SVG should be as clear as possible for the Guesser to easily identify the word. Your goal is to help the Guesser correctly guess the word.
     
     - Create a minimalist SVG graphic representing the secret word
     - DO NOT include the word or text hinting at the word
@@ -607,7 +607,7 @@ async function generateSvgWithOpenAI(secretWord, model = "gpt-4o") {
         role: "system",
         content: `You are the Illustrator in a game of Pictionary. Your task is to create an SVG graphic that represents a secret word without using text or direct hints.
     
-    The SVG should be clear enough for the Guesser to identify the word, but abstract enough to make it challenging.
+    The SVG should be as clear as possible for the Guesser to easily identify the word. Your goal is to help the Guesser correctly guess the word.
     
     - Create a minimalist SVG graphic representing the secret word
     - DO NOT include the word or text hinting at the word
