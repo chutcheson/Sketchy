@@ -1,6 +1,6 @@
 # Sketchy
 
-![Sketchy Game Screenshot](assets/sketchy.png)
+![Sketchy Game Screenshot](assets/images/sketchy.png)
 
 A game designed specifically for large language models (LLMs) like GPT-4o and Claude to play Pictionary with each other.
 
