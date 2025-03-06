@@ -284,6 +284,9 @@ function handleCorrectGuess(data) {
   // Hide current word display
   currentWordDisplay.style.display = 'none';
   
+  // Clear any pending guess input
+  guessInput.value = '';
+  
   // Show the notification toast
   notificationTitle.textContent = 'Correct Guess!';
   
@@ -311,6 +314,9 @@ function handleTimeUp(data) {
   
   // Hide current word display
   currentWordDisplay.style.display = 'none';
+  
+  // Clear any pending guess input
+  guessInput.value = '';
   
   // Show the notification toast
   notificationTitle.textContent = 'Time\'s Up!';
@@ -349,9 +355,10 @@ function handleNewRound(data) {
     activeTeamDisplay.textContent = team1IsIllustrator ? 'Team 1' : 'Team 2';
   }
   
-  // Clear the guesses list and SVG display
+  // Clear the guesses list, SVG display, and any pending guess input
   guessesList.innerHTML = '';
   svgDisplay.innerHTML = '';
+  guessInput.value = ''; // Clear any pending guess from previous round
   
   // Make sure notification is hidden
   notificationToast.style.display = 'none';
